@@ -70,8 +70,8 @@ class myJutils {
    const tyrs = document.createElement('div');
         tyrs.innerHTML = element;         
     return new myJutils(tyrs);   
-      } else if (typeof element === 'string' && element.trim().startsWith(':')) {
-        const lisd = document.createElement(element.replace(':', ''));
+      } else if (typeof element === 'string' && element.trim().startsWith(':') && !element.trim().endsWith(':')) {
+        const lisd = document.createElement(element.trim().replace(':', ''));
         return new myJutils(lisd);
       } else {
         this.element = document.querySelector(element);
@@ -275,29 +275,20 @@ if (callback.startsWith(':val-contains(') && callback.endsWith(')')) {
 
 
 /* loading icon based on duration */
-loader(duration = 2000, options) {
-  const defaults = {
-    width: 40,
-    height: 40,
-    bg: '#f3f3f3',
-    fg: '#3498db',
-    radius: 70,    
-    bw: 5,
-    fw: 5,
-    stop: 100000000, // seconds
-    callback: () => {
-        
-    }  
-  };
-
-  const settings = Object.assign(defaults, options);
-
-  this.element.style.width = `${settings.width || settings.w}px`;
-  this.element.style.height = `${settings.height || settings.h}px`;
-  this.element.style.border = `${settings.bw || settings.backWeight}px solid ${settings.bg || setting.background}`;
-  this.element.style.borderTop = `${settings.fw || settings.foreWeight}px solid ${settings.fg ||settings.foreground}`;
-  this.element.style.borderRadius = `${settings.radius || settings.borderRadius}%`;
-  this.element.style.animation = `spin ${duration / 1000}s linear infinite`;
+loader(duration = 2000, options = {}) {
+  this.element.style.width = `${options.width || 40}px`;
+  this.element.style.height = `${options.height || 40}px`;
+  
+  this.element.style.border = `${options.backWeight || 5}px solid ${options.background || '#f3f3f3'}`;
+ 
+ this.element.style.border = options.border; 
+    
+  this.element.style.borderTop = `${options.foreWeight || 5}px solid ${options.foreground || '#3498db'}`;
+ 
+this.element.style.borderTop = options.borderTop; 
+  
+  this.element.style.borderRadius = `${options.borderRadius || 70}%`;
+  this.element.style.animation = options.animation || `spin ${duration / 1000}s linear infinite`;
 
   const stys = document.createElement('style');
   stys.innerHTML = `
@@ -314,11 +305,24 @@ loader(duration = 2000, options) {
   
   setTimeout(() => {
 this.element.style.animation = 'none';
-settings.callback(this);
-}, settings.stop);  
+options.callback(this.element);
+}, options.stop || 100000000000);  
 };
 
-    
+
+/* restart stop animation */ 
+restartLoader(duration) {
+  this.element.style.animation = `spin ${duration / 1000}s linear infinite`;
+}; 
+
+
+/* stop animation */ 
+stopLoader(delay = 10000) {
+setTimeout(() => {
+  this.element.style.animation = 'none';
+  }, delay);
+};         
+
 
 /* apply css style to elements setting multiple or single */
 css(styles, property) {
@@ -345,29 +349,21 @@ prepend(content) {
 }
 
 // append method create element to document 
-appendTo(content) {
-if(content) {    
-content.append(this.element);      
-  } else {
- throw new RangeError('appendTo() required 1 argument!');     
-  }
+appendTo(content) { 
+if(content) {   
+content.append(this.element);  
+}   
 }
 
 // prepend method create element to document 
 prependTo(content) {
 if(content) {
 content.prepend(this.element);    
-} else {
-throw new RangeError('prependTo() required 1 argument!');
-}  
+} 
 }
 
-// remove whitespace from element 
-trim() {
-   return this.check.trim();
-}
 
-//set or get element attribute 
+// set or get element attribute 
 attr(first, second) {
  if(first && second) {
  this.element.setAttribute(first, second); 
@@ -381,8 +377,6 @@ return this.element.getAttribute(first);
 removeAttr(first) {
 if(first) {
    this.element.removeAttribute(first);  
-} else {
- throw new RangeError('removeAttr() required 1 argument!');   
 }
  }
 
@@ -405,54 +399,57 @@ setTimeout(() => {
 /* toggle show hide element with an optional delay */
 toggle(delay = 0) {
 setTimeout(() => {   
-  this.element.style.display = this.element.style.display === 'none' ? 'block' : 'none'
+  this.element.style.display = this.element.style.display === 'none' ? 'block' : 'none';
   }, delay);  
   return new myJutils(this.element);
 }
 
 // add css class to an element 
 addClass(style) {
+if(style) {
 this.element.classList.add(style);
-   return new myJutils(this.element);   
+   return new myJutils(this.element);  
+   } 
 }
 
 // remove css class from an element 
 removeClass(style) {
+if(style) {
 this.element.classList.remove(style);
-   return new myJutils(this.element);   
+   return new myJutils(this.element);  
+   } 
 }
 
 // toggle css class to an element 
 toggleClass(style) {
+if(style) {
 this.element.classList.toggle(style);
    return new myJutils(this.element);   
+   }
 }
 
 /* check if an element has the specific class */
 hasClass(style) {
 if(style) {
  return this.element.classList.contains(style);   
-} else {
-   throw new RangeError('hasClass() required 1 argument!');
-}
+} 
 }
 
  
-prev() {
-  if (this.element.previousElementSibling) {
-    return new myJutils(this.element.previousElementSibling);
-  } else {
-    return null;
-  }
-}
+next(selector) {
+  const sibling = this.element.nextElementSibling;
+  if (!sibling) return null;
+  if (selector && !sibling.matches(selector)) return null;
+  return new myJutils(sibling);
+};
 
-next() {
-  if (this.element.nextElementSibling) {
-    return new myJutils(this.element.nextElementSibling);
-  } else {
-    return null;
-  }
-}
+prev(selector) {
+  const sibling = this.element.previousElementSibling;
+  if (!sibling) return null;
+  if (selector && !sibling.matches(selector)) return null;
+  return new myJutils(sibling);
+};
+
 
 child(index = 0) {
   if (this.element.children[index]) {
@@ -462,39 +459,47 @@ child(index = 0) {
   }
 }
 
-first() {
-  if (this.element.firstElementChild) {
-    return new myJutils(this.element.firstElementChild);
-  } else {
-    return null;
-  }
-}
 
-last() {
-  if (this.element.lastElementChild) {
-    return new myJutils(this.element.lastElementChild);
-  } else {
-    return null;
-  }
-}
+first(selector) {
+  const child = this.element.firstElementChild;
+  if (!child) return null;
+  if (selector && !child.matches(selector)) return null;
+  return new myJutils(child);
+};
 
+
+last(selector) {
+  const child = this.element.lastElementChild;
+  if (!child) return null;
+  if (selector && !child.matches(selector)) return null;
+  return new myJutils(child);
+};
+
+
+// Insert content before the element
 before(content) {
   if (typeof content === 'string') {
+    // Insert HTML string before element
     this.element.insertAdjacentHTML('beforebegin', content);
   } else {
+    // Insert element/node before this.element
     this.element.parentNode.insertBefore(content, this.element);
   }
-  return this;
-}
+  return new myJutils(this.element);; // Enable chaining
+};
 
-after(content) {
+
+// Insert content after the element
+ after(content) {
   if (typeof content === 'string') {
+    // Insert HTML string after element
     this.element.insertAdjacentHTML('afterend', content);
   } else {
+    // Insert element/node after this.element
     this.element.parentNode.insertBefore(content, this.element.nextSibling);
   }
-  return this;
-}
+  return new myJutils(this.element); // Enable chaining
+};
 
 
 /* add EventListener dynamically */
@@ -604,23 +609,23 @@ itype(type) {
 
   if (['password', 'text'].includes(type)) {
     this.element.type = type;
-    return true; // Return the new type
-  } else {
-    console.warn(`Invalid type: ${type}. Toggling between 'password' and 'text'.`);
+    return this.element.type; // Return the new type
+  } else {    
     this.element.type = this.element.type === 'password' ? 'text' : 'password';
-    return true; // Return the new type
+    return this.element.type; // Return the new type
   }
 }
 
 
-/* progress bar */
-progressBar(options) {
-  const defaults = {
-    width: 100,
-    height: 10,
+// progress bar method 
+progressBar(options = {}) {
+this.element.innerHTML = '';
+const defaults = {
+    width: '100%',
+    height: '10px',
     background: 'yellow',
     foreground: 'green',
-    duration: 10000, // seconds
+    stop: 10000, // seconds
     borderRadius: '10px',
     callback: () => {
         
@@ -629,8 +634,8 @@ progressBar(options) {
 
   const settings = Object.assign(defaults, options);
 
-  this.element.style.width = `${settings.width}%`;
-  this.element.style.height = `${settings.height}px`;
+  this.element.style.width = settings.width;
+  this.element.style.height = settings.height;
   this.element.style.backgroundColor = settings.background;
   this.element.style.borderRadius = settings.borderRadius;
   this.element.style.overflow = 'hidden';
@@ -639,7 +644,7 @@ progressBar(options) {
   progressBar.style.width = '0%';
   progressBar.style.height = '100%';
   progressBar.style.backgroundColor = settings.foreground;
-  progressBar.style.transition = `width ${settings.duration / 1000}s`;
+  progressBar.style.transition = `width ${settings.stop / 1000}s`;
 
   this.element.appendChild(progressBar);
 
@@ -648,14 +653,13 @@ progressBar(options) {
   }, 1);
 
  setTimeout(() => {
-settings.callback(this); 
- }, settings.duration); 
+settings.callback(this.element); 
+ }, settings.stop); 
 };
 
 
-
-/* limit characters method */
-limitChar(limit, callbacks) {
+// limit element characters method 
+charLimit(limit, callback = () => {}) {
   let property;
   if (this.element.tagName !== 'INPUT' && this.element.tagName !== 'TEXTAREA') {
     property = 'textContent';
@@ -668,30 +672,15 @@ if(limit) {
       this.element.setAttribute('yfds', conth.length);
       if (conth.length >= limit) {
         this.element[property] = conth.slice(0, limit);
-    if(callbacks) callbacks (this.element[property].length);      
+   callback (this.element, this.element[property].length);      
       }    
     });
-  }
-
-  return {
-    queue: (callback) => {
-      this.element.addEventListener('input', () => {
-        const conth = this.element[property];
-    if(callbacks) {
-  throw new Error('Cannot use both callback');   
-    }    
-        if (limit && conth.length === limit) {
-          callback(this.element[property].length);
-        }
-      });
-      return this; // Return the object itself for chaining
-    }
-  };
+  }  
 }
 
 
 // sliding down element based on duration 
-slideDown(delay, callback) {
+slideDown(delay = 10000, callback = () => {}) {
   const fit = delay / 1000;
   this.element.style.transition = `max-height ${fit}s ease-in-out`;
   this.element.style.overflow = 'hidden';
@@ -703,25 +692,14 @@ slideDown(delay, callback) {
   
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay); 
-  }
-  
-  return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  }
-setTimeout(() => {
-    call(this);
-}, delay);       
   }   
-  }
 }
 
 
 // it work as sliding element up on duration 
-slideUp(delay, callback) {
+slideUp(delay = 10000, callback = () => {}) {
   const scrollHeight = this.element.scrollHeight;
   const fit = delay / 1000; /* Calculate the transition time in seconds */
   this.element.style.transition = `max-height ${fit}s ease-in-out`;
@@ -735,24 +713,14 @@ slideUp(delay, callback) {
   
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay); 
-  }
-  
-  return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  }
-setTimeout(() => {
-    call(this);
-}, delay);       
-  }   
   }
 }
 
+
 // Define the tickerRight method
- tickerRight(delay = 10, options) { 
+ tickerRight(delay = 10, stop = 10000, callback = () => {}) { 
       const originalHtml = this.element.innerHTML;
       const timer = delay / 1000;
       const text = this.element.textContent;
@@ -769,32 +737,19 @@ setTimeout(() => {
         }
       }, timer);
       
- if(typeof options === 'object') {         
+         
       setTimeout(() => {
         clearInterval(intervalId);
         this.element.style.transform = '';
         this.element.style.overflow = '';
         this.element.innerHTML = originalHtml; // Restore original HTML content
-   options.callback(this);   
-      }, options.stop || 10000);    
- } else {
-   return {
-   queue: (call) => {
-setTimeout(() => {
-        clearInterval(intervalId);
-        this.element.style.transform = '';
-        this.element.style.overflow = '';
-        this.element.innerHTML = originalHtml; // Restore original HTML content
-   call(this);   
-      }, options || 10000);           
-   }    
-   } 
- }     
+   callback(this.element);   
+      }, stop);    
     }
 
 
 /* it work as scrolling from left to right continuously */
-tickerLeft(delay = 10, options) {
+tickerLeft(delay = 10, stop = 10000, callback = () => {}) {
   const originalHtml = this.element.innerHTML;
   const timer = delay / 1000;
   const text = this.element.textContent;
@@ -811,31 +766,18 @@ tickerLeft(delay = 10, options) {
     }
   }, timer);
 
-if(typeof options === 'object') {
+
   setTimeout(() => {
     clearInterval(intervalId);
     this.element.style.transform = '';
     this.element.style.overflow = '';
     this.element.innerHTML = originalHtml; // Restore original HTML content
-    options.callback(this);
-  }, options.stop || 10000);
-  } else {
-return {
-   queue: (call) => {
-setTimeout(() => {
-    clearInterval(intervalId);
-    this.element.style.transform = '';
-    this.element.style.overflow = '';
-    this.element.innerHTML = originalHtml; // Restore original HTML content
-    call(this);
-  }, options || 10000);       
-   }
-}     
-  }  
+    callback(this.element);
+  }, stop);
 }
 
 
-slideLeft(delay, callback) {
+slideLeft(delay = 10000, callback = () => {}) {
 document.body.style.position = 'fixed';
 this.element.style.display = 'none';  
   setTimeout(() => {
@@ -851,24 +793,13 @@ this.element.style.display = 'none';
 
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay); 
 }  
-
-return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  }
-setTimeout(() => {
-    call(this);
-}, delay);       
-  }   
-  }  
 }
 
 
-slideRight(delay, callback) {
+slideRight(delay = 10000, callback = () => {}) {
 document.body.style.position = 'fixed';
   this.element.style.display = 'none';
   setTimeout(() => {
@@ -884,121 +815,21 @@ document.body.style.position = 'fixed';
  
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay);  
 }
-  
-  return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  } 
-setTimeout(() => {
-    call(this);
-}, delay);       
-  }   
-  }
-}
-
-
-/* Autotyping text automatically */
-autoTyping(phrases, options = {}) {
-const elementId = this.element;
-  const typedTextElement = elementId;
-  let currentPhraseIndex = 0;
-  let currentCharIndex = 0;
-  let isDeleting = false;
-  let loopCount = 0;
-
-  // Set default options
-  const typeSpeed = options.typeSpeed || 100;
-  const retype = options.retype !== undefined ? options.retype : false;
-  const stopAt = options.stopAt || (retype ? null : 'end');
-  const loop = options.loop || (retype ? Infinity : 1);
-  const endWith = options.endWith || 'last';
-
-  // Convert phrases to array if it's not already
-  if (!Array.isArray(phrases)) {
-    phrases = [phrases];
-  }
-
-  function autoType() {
-    const currentPhrase = phrases[currentPhraseIndex];
-
-    if (isDeleting) {
-      typedTextElement.innerHTML = currentPhrase.substring(0, currentCharIndex);
-      currentCharIndex--;
-      if (currentCharIndex === 0) {
-        isDeleting = false;
-        currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
-        if (currentPhraseIndex === 0) {
-          loopCount++;
-          if (loopCount >= loop) {
-            if (endWith === 'last') {
-              typedTextElement.innerHTML = phrases[phrases.length - 1];
-            } else if (endWith === 'first') {
-              typedTextElement.innerHTML = phrases[0];
-            } else if (endWith === 'empty') {
-              typedTextElement.innerHTML = '';
-            }
-            return clearInterval(intervalId);
-          }
-        }
-      }
-    } else {
-      typedTextElement.innerHTML = currentPhrase.substring(0, currentCharIndex + 1);
-      currentCharIndex++;
-
-      // Check if we need to stop or delete
-      if (stopAt && currentPhrase.substring(0, currentCharIndex).toLowerCase().includes(stopAt.toLowerCase())) {
-        if (retype) {
-          isDeleting = true;
-        } else {
-          return clearInterval(intervalId);
-        }
-      }
-
-      if (currentCharIndex === currentPhrase.length) {
-        if (retype) {
-          if (stopAt === null) {
-            setTimeout(() => {
-              isDeleting = true;
-            }, 1000); // wait 1 second before deleting
-          } else {
-            isDeleting = true;
-          }
-        } else {
-          currentCharIndex = 0;
-          if (loopCount < loop - 1) {
-            loopCount++;
-          } else {
-            if (endWith === 'last') {
-              typedTextElement.innerHTML = phrases[phrases.length - 1];
-            } else if (endWith === 'first') {
-              typedTextElement.innerHTML = phrases[0];
-            } else if (endWith === 'empty') {
-              typedTextElement.innerHTML = '';
-            } 
-            return clearInterval(intervalId);
-          }
-        }
-      }
-    }
-  }
-
-  const intervalId = setInterval(autoType, typeSpeed);
 }
 
 
 /* replace element not */
-keepChar(charsToKeep, replacement, global = false) {
+charKeep(charsToKeep, replacement, global = false) {
   const regex = new RegExp(`[^${charsToKeep}]`, global ? 'g' : '');
   return this.check.toString().replace(regex, replacement);
 }
 
 
 /* fade out html element based on delay */
-fadeOut(delay = 0, callback) {
+fadeOut(delay = 10000, callback) {
   this.element.style.display = 'block';
   this.element.style.opacity = 1;
   this.element.style.transition = `all ${delay / 1000}s`;
@@ -1009,29 +840,16 @@ fadeOut(delay = 0, callback) {
     this.element.style.display = 'none';
   }, delay); 
   
-
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay); 
 }  
-  
-  return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  }
-setTimeout(() => {
-    call(this);
-}, delay);       
-  }   
-  }
 }
 
 
-
 /* fade in html element based on delay */
-fadeIn(delay = 0, callback) {
+fadeIn(delay = 10000, callback) {
   const fitd = delay / 1000;
   this.element.style.transition = `all ${fitd}s`;
   this.element.style.display = 'block';
@@ -1039,24 +857,13 @@ fadeIn(delay = 0, callback) {
   this.element.offsetHeight; // Trigger a reflow
   this.element.style.opacity = 1;
   
-
   if(callback) {
 setTimeout(() => {
-    callback(this);
+    callback(this.element);
 }, delay); 
-}  
-  
-  return {
-  queue: (call) => {
-  if(callback) {
-throw new Error('Callback must not be 2');    
-  }
-setTimeout(() => {
-    call(this);
-}, delay);       
-  }   
-  }
+}      
 }
+
 
 /* delay element */
 delay(delay = 0) {  
@@ -1213,16 +1020,20 @@ try {
 }
 
 
-/* insert element to a string with position */
-insert(char, position = '0') {
-if(position === 'start') {
-return char + this.check;   
-} else if(position === 'end') {
-return this.check + char;   
-} else {
- return this.check.slice(0, position) + char + this.check.slice(position);
+// insert to a string with position
+putAt(char, position) {
+  let index;
+  if (typeof position === 'number') {
+    index = position - 1;
+  } else {
+    index = this.check.indexOf(position);
+    if (index === -1) {
+      throw new Error('Position string not found');
+    }
+  }  
+ return this.check.slice(0, index + (typeof position === 'number' ? 1 : position.length)) + char + this.check.slice(index + (typeof position === 'number' ? 1 : position.length)); 
 }
-}
+
 
 /* Contenteditable true function */
 edit(options) {
@@ -1250,7 +1061,6 @@ element.addEventListener('input', () => {
     }
 })
 
-
   let style = document.querySelector('style[data-placeholder-style]');
   if (!style) {
     style = document.createElement('style');
@@ -1263,6 +1073,7 @@ element.addEventListener('input', () => {
     document.head.appendChild(style);
   }
 }
+
 
 /* add hr line to element */
 lineIt(type, option = {}) {
@@ -1360,7 +1171,7 @@ some(callback) {
 }
 
 
-in(type) {
+charCount(type) {
   const str = this.element;
   switch(type) {
     case 'upper': 
@@ -1378,8 +1189,7 @@ in(type) {
   }  
 }
 
-
-/* Clipboard copy text  */
+// Clipboard copy text  
  copy(callback) {
 const text = this.check; 
   if (navigator.clipboard) {
@@ -1409,7 +1219,7 @@ const text = this.check;
 }
 
 
-/* make text not ccopyable */
+// make text not ccopyable 
  uncopy() {
  const element = this.element;
     if (element) {
@@ -1434,84 +1244,8 @@ const text = this.check;
     });
   }
 }
-
-
-/* hash element */
-hash(mode = '', pin = '') {
-  const element = this.check;
-  let hash = '';
-  let multiplier = 1;
-  let offset = 0;
-
-  if (mode === 'DEFAULT') {
-    multiplier = 2 * element.length;
-  } else if (mode === 'PRIVACY') {
-    multiplier = pin.length * 2 + element.length;
-  try { 
-    offset = pin.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    } catch {
- throw new Error('hash() pin must be a string');  
-    }
-  } else if (mode === 'HIGH_SECURITY') {
-    const hashBuffer = [];
-    for (let i = 0; i < pin.length; i++) {
-      hashBuffer.push(pin.charCodeAt(i));
-    }
-    for (let i = 0; i < element.length; i++) {
-      hashBuffer.push(element.charCodeAt(i));
-    }
-    let hashValue = 2166136261;
-    for (let i = 0; i < hashBuffer.length; i++) {
-      hashValue = hashValue ^ hashBuffer[i];
-      hashValue = hashValue * 16777219;
-    }
-    hash = hashValue.toString(16);
-  } else if(mode) {
-  throw new TypeError(`"${mode}" is not a valid mode`);    
-  }
-
-  for (let i = 0; i < element.length; i++) {
-    const charCode = element.charCodeAt(i);
-    const hashedChar = String.fromCharCode(charCode + (i % 10) * multiplier + offset);
-    hash += hashedChar;
-  }
-  return hash;
-}
-
-
-/* unhashed already hashed element */
-unhash(mode = '', pin = '') {
-  const element = this.check;
-  let unHash = '';
-  let multiplier = 1;
-  let offset = 0;
-
-  if (mode === 'DEFAULT') {
-    multiplier = 2 * element.length;
-  } else if (mode === 'PRIVACY') {
-    multiplier = pin.length * 2 + element.length;
-    try { 
-    offset = pin.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-     } catch {
- throw new Error('unhash() pin must be a string');  
-    }
-  } else if(mode === 'HIGH_SECURITY') {
-throw new Error('Cannot unhash HIGH_SECURITY mode');      
-  } else if(mode) {
-  throw new TypeError(`"${mode}" is not a valid mode`);    
-  }
   
-
-  for (let i = 0; i < element.length; i++) {
-    const charCode = element.charCodeAt(i);
-    const unHashedChar = String.fromCharCode(charCode - (i % 10) * multiplier - offset);
-    unHash += unHashedChar;
-  }
-  return unHash;
-}
-  
-  
-/* sanitize user input */
+// sanitize string 
 sanitize(...filters) { 
   const filterFunctions = {
     emoji: (c) => /[\p{Extended_Pictographic}\u200d]/u.test(c),
@@ -1533,7 +1267,7 @@ sanitize(...filters) {
 } 
 
 
-/* filterOut element method */
+// filterOut string 
 filterOut(...filters) {
   const filterFunctions = {
     emoji: (s) => s.replace(/[\p{Extended_Pictographic}\u200d]+/gu, ''),
@@ -1719,7 +1453,7 @@ return new myJutils(selector, all);
 
 
 
-/* random array class methods */
+// ascend array with optional key
  $.asc = function(arr, key) {
  const array = arr;
     if (key) {
@@ -1732,6 +1466,7 @@ return new myJutils(selector, all);
   }
 
 
+// descend array with optional key
  $.desc = function(arr, key) {
  const array = arr;
     if (key) {
@@ -1743,56 +1478,52 @@ return new myJutils(selector, all);
     }
   }
 
+// reverse array
  $.reverse = function() { 
     return this.check.reverse();
   }
 
-
+// generate random array 
  $.randArr = function(arr) {
 const array = arr; 
     return array[Math.floor(Math.random() * array.length)];
   }
  
-
+// to fixed
 $.fixed = function(value, length = 2) {
-if(isNaN(value) || isNaN(length)) {
-throw new Error('Fixed argument must be numeric');  
-} 
+
 return Number(value).toFixed(length);  
 }
 
-
+// to string 
 $.str = function(element) {
 return element.toString(); 
 }
 
-
-
+// to uppercase 
 $.upper = function(element) {
 return element.toUpperCase(); 
 }
 
-
+// to lowercase 
 $.lower = function(element) {
 return element.toLowerCase();  
 }
 
-
+// parseInt 
 $.int = function(element) {
 return parseInt(element); 
 }
 
-
+// parseFloat 
 $.float = function(element) {
 return parseFloat(element);
 }
-
 
 // JSON.stringify function 
 $.json = function(element) {
   return JSON.stringify(element);
 }
-
 
 // JSON.parse function 
 $.parse = function(element) {
@@ -1800,48 +1531,53 @@ return JSON.parse(element);
 }
  
 
-/* setInterval */
+// setInterval 
 $.interval = function(callback, timer = 0) {
-if(arguments.length === 1) {
- return clearInterval(callback);     
-} else if(arguments.length === 2) {
+if(timer === undefined) {
+  clearInterval(callback); 
+  return true;   
+} else if(callback !== undefined && timer !== undefined) {
 if(typeof callback === 'function') {    
 const intervalId = setInterval(() => {
-    callback(this);
+    callback();
 }, timer);
 return intervalId;
 } else {
   setTimeout(() => {
-   return clearInterval(callback);  
+   clearInterval(callback); 
+   return true;
 }, timer); 
 }
 }
 }
 
 
-/* setTimeout */
+// setTimeout 
 $.timeout = function(callback, timer = 0) {
-  if(arguments.length === 1) {
-return clearTimeout(callback);     
-  } else if(arguments.length === 2) {
+if(timer === undefined) {
+ clearTimeout(callback); 
+ return true;   
+  } else if(callback !== undefined && timer !== undefined) {
   if(typeof callback === 'function') {    
 const timeoutId = setTimeout(() => {
- callback(this);   
+ callback();   
 }, timer); 
 return timeoutId;   
   } else {
   setTimeout(() => {
- return clearTimeout(callback);     
+  clearTimeout(callback);   
+  return true; 
 }, timer); 
   }  
 }
 }
 
 
-/* reload page location.reload  */
+// reload page location reload  
 $.reload = function(timer) {
    if(!timer) {
     location.reload();   
+    return true;
    } else {
   setTimeout(() => {
    location.reload();    
@@ -1850,10 +1586,11 @@ $.reload = function(timer) {
 }
 
 
-/* redirect url */
+// redirect url 
 $.redirect = function(url, timer) {
    if(timer === undefined) {   
-   window.location.href = url;           
+   window.location.href = url;   
+   return true;       
    } else {
   setTimeout(() => {
    window.location.href = url;       
@@ -1862,7 +1599,7 @@ $.redirect = function(url, timer) {
 }
 
 
-/* fetch api data auto XML */    
+// fetch api data auto XML     
  $.getData = function(...args) {
     if (args.length % 2 !== 0) {
         throw new Error('Number of arguments must be even');
@@ -1885,9 +1622,8 @@ $.redirect = function(url, timer) {
 
       
 
-
+// custom alert function 
 let alrs = 0;
-
 $.alert = function(text = '', btn1 = 'OK') {
 return new Promise((resolve, reject) => {
   const currentId = alrs++;
@@ -1917,8 +1653,8 @@ return new Promise((resolve, reject) => {
 }
 
 
+ // custom confirm function 
 let conrs= 0;
-
 $.confirm = function(text = '', btn1 = 'CANCEL', btn2 = 'OK') {
   return new Promise((resolve, reject) => {
     const currentId = conrs++;
@@ -1955,8 +1691,8 @@ $.confirm = function(text = '', btn1 = 'CANCEL', btn2 = 'OK') {
 }
 
 
+// custom prompt function 
 let promyr = 0;
-
 $.prompt = function(text = '', btn1 = 'CANCEL', btn2 = 'OK') {
   return new Promise((resolve, reject) => {
     const currentId = promyr++;
@@ -1994,7 +1730,7 @@ $.prompt = function(text = '', btn1 = 'CANCEL', btn2 = 'OK') {
 }
 
  
-// random number function 
+// generate random number  
 $.randInt = function(min, max) {
   if(max === undefined) {
 return Math.floor(Math.random() * min);    
@@ -2006,7 +1742,7 @@ return Math.floor(Math.random() * (max - min + 1)) + min;
 }     
 
 
-/* random alphabet function */
+// generate random alphabet 
 $.randAlpha = function(length, options = {}) {
   let alphabets = '';
   if (options.uppercase) alphabets += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -2021,7 +1757,7 @@ $.randAlpha = function(length, options = {}) {
 };
 
 
-/* validate user email address and return boolean */
+// validate email
 $.validateEmail = function(email) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email.trim()) && email.length <= 254;
@@ -2063,7 +1799,7 @@ return callback(input);
 }
 
 
-/* manipulate pushState function */
+// manipulate pushState function 
 $.state = function(flag, url, options = {}) {
   if (!flag || typeof flag !== 'string' || !url || typeof url !== 'string') {
     throw new Error('Invalid flag or url. Both must be non-empty strings.');
@@ -2077,12 +1813,10 @@ $.state = function(flag, url, options = {}) {
 
 // onpopstate logic
 $.stateEvent = function(callback) {
-  if (typeof callback !== 'function') {
-    throw new Error('Callback must be a function.');
-  }
-
-  window.addEventListener('popstate', callback);
-  return callback;
+  if (typeof callback === 'function') {
+window.addEventListener('popstate', callback);
+  return callback;    
+  }  
 }
 
 
@@ -2097,7 +1831,7 @@ return myParams;
 }
 
 
-/* manipulate window location */
+// manipulate window location 
 $.location = function(flag, url) {
 if(!flag || typeof flag !== 'string') {
 throw new Error('Invalid flag');
@@ -2112,7 +1846,7 @@ throw new Error('Invalid flag');
 }
 
 
-/* custom formData() utility function */
+// custom formData() utility function 
 $.formData = function(...args) {
   const formData = new FormData();
 
@@ -2148,58 +1882,57 @@ $.formData = function(...args) {
 };
 
 
-
-/* localStorage API function */
+// localStorage API function 
  $.storage = function(key, value) {
 if(key === undefined) {
 return localStorage;  
 } else if(value === undefined) {
-if(key === ':CLEAR:') {
+if(key.toUpperCase() === ':CLEAR:') {
 localStorage.clear();
     return true;     
-} else if(Number(key)) {
+} else if(Number(key) && !isNaN(key)) {
 return localStorage.key(key);          
 } else {
  return localStorage.getItem(key);  
 }   
 } else {
-if(value !== ':REMOVE:') {
+if(value.toUpperCase() !== ':REMOVE:' && key.toUpperCase() !== ':REMOVE:') {
 localStorage.setItem(key, value);
 return true;       
  } else {
-   localStorage.removeItem(key);   
+   localStorage.removeItem(key.toUpperCase() !== ':REMOVE:' ? key : value);      
    return true;       
  }    
 } 
  }
 
 
-/* sessionStorage API function */
+// sessionStorage API function 
  $.session = function(key, value) {
 if(key === undefined) {
 return sessionStorage;  
 } else if(value === undefined) {
-if(key === ':CLEAR:') {
+if(key.toUpperCase() === ':CLEAR:') {
 sessionStorage.clear();
     return true;     
-} else if(Number(key)) {
+} else if(Number(key) && !isNaN(key)) {
 return sessionStorage.key(key);          
 } else {
  return sessionStorage.getItem(key);  
 }   
 } else {
-if(value !== ':REMOVE:') {
+if(value.toUpperCase() !== ':REMOVE:' && key.uoUpperCase() !== ':REMOVE:') {
 sessionStorage.setItem(key, value);
 return true;       
- } else {
-   sessionStorage.removeItem(key);   
+ } else {    
+   sessionStorage.removeItem(key.toUpperCase() !== ':REMOVE:' ? key : value);        
    return true;       
  }    
 } 
  }
  
 
-/* Makes an AJAX request to a server. */
+// Makes an AJAX request to a server. 
   $.ajax = function(options = {}) {
   // Validate URL
   if (!options.url || options.url.trim() === "") {
@@ -2366,7 +2099,7 @@ $.when = function(...promises) {
 }
 
 
-/* Gets or sets a property of the current date. */
+// manipulate date object SET or GET
 $.date = function(...args) {
   const request = new Date();
   
@@ -2468,7 +2201,7 @@ $.dataStore = function(key, data) {
 
   let latestItem = history[history.length - 1] || {};
 
-  return $.extend(history, latestItem);
+  return $.extend(history, latestItem)
 }
 
 
@@ -2476,3 +2209,143 @@ $.dataStore = function(key, data) {
 $.extend = function(target, ...args) {
   return Object.assign(target, ...args); 
 }
+
+
+
+/* Autotyping text automatically */
+myJutils.prototype.autoType = function(html, options = {}) {
+  const defaults = {
+    typeSpeed: 100,
+    loop: 1,
+    stopAt: null,
+    parser: 'html',
+    doneText: null
+  };
+
+  const settings = { ...defaults, ...options };
+
+  let currentIndex = 0;
+  let isDeleting = false;
+  let loopCount = 0;
+  let textContent = settings.parser === 'text' ? getTextContent(html) : html;
+
+  function type() {
+    if (isDeleting) {
+      this.element.innerHTML = textContent.substring(0, currentIndex) + getCaret();
+      currentIndex--;
+      if (currentIndex < 0) {
+        isDeleting = false;
+        loopCount++;
+        if (loopCount >= settings.loop) {
+          clearInterval(intervalId);
+          const displayText = settings.doneText || (settings.parser === 'html' ? html : textContent);
+          this.element.innerHTML = displayText;
+        }
+      }
+    } else {
+      this.element.innerHTML = textContent.substring(0, currentIndex + 1) + getCaret();
+      currentIndex++;
+
+      if (settings.stopAt && textContent.substring(0, currentIndex).includes(settings.stopAt)) {
+        isDeleting = true;
+      }
+
+      if (currentIndex >= textContent.length) {
+        if (settings.loop > 1) {
+          isDeleting = true;
+        } else {
+          clearInterval(intervalId);
+          const displayText = settings.doneText || (settings.parser === 'html' ? html : textContent);
+          this.element.innerHTML = displayText;
+        }
+      }
+    }
+  }
+
+  function getTextContent(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  function getCaret() {
+    return '<span style="border-right: 1px solid black; margin-left: 1px;"></span>';
+  }
+
+  const intervalId = setInterval(type.bind(this), settings.typeSpeed);
+};
+
+
+ /* Checks if a network request to the specified URL is successful.
+ */
+$.networkCheck = function(url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', dataType = 'json') {                                                     
+  return new Promise((resolve) => {
+    if (window.fetch) {
+      fetch(url)
+        .then(response => {
+        try {
+      return response[dataType]();
+      } catch {
+   throw new Error(`Invalid dataType ${dataType}`);      
+      }
+         })
+        .then((data) => {          
+       resolve(true);                          
+        })
+        .catch(() => {
+          resolve(false);
+        });
+    } else {
+ const xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+   try {  
+      xhr.responseType = dataType;
+      } catch {
+    throw new Error(`Invalid dataType ${dataType}`);         
+      }      
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      };
+      xhr.onerror = function() {
+        resolve(false);
+      };
+      xhr.send();
+    }           
+    });    
+};
+
+
+// hash a string 
+$.hash = function(check, pin = '') {
+  let hash = '';
+  let offset = 0;
+  if (pin) {
+    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
+  for (let i = 0; i < check.length; i++) {
+    const charCode = check.charCodeAt(i);
+    const hashedChar = String.fromCharCode(charCode + (i % 10) * (pin ? pin.length : 1) + offset);
+    hash += hashedChar;
+  }
+  return hash;
+}
+
+// unhash a string
+$.unhash = function(check, pin = '') {
+  let unHash = '';
+  let offset = 0;
+  if (pin) {
+    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
+  for (let i = 0; i < check.length; i++) {
+    const charCode = check.charCodeAt(i);
+    const unHashedChar = String.fromCharCode(charCode - (i % 10) * (pin ? pin.length : 1) - offset);
+    unHash += unHashedChar;
+  }
+  return unHash;
+}
+  
