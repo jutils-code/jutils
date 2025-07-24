@@ -1896,11 +1896,11 @@ return localStorage.key(key);
  return localStorage.getItem(key);  
 }   
 } else {
-if(value.toUpperCase() !== ':REMOVE:' && key.toUpperCase() !== ':REMOVE:') {
+if(value !== ':REMOVE:' && value !== ':remove:' && key !== ':REMOVE:' && key !== ':remove:') {
 localStorage.setItem(key, value);
 return true;       
  } else {
-   localStorage.removeItem(key.toUpperCase() !== ':REMOVE:' ? key : value);      
+   localStorage.removeItem(key !== ':REMOVE:' && key !== ':remove:' ? key : value);      
    return true;       
  }    
 } 
@@ -1921,11 +1921,11 @@ return sessionStorage.key(key);
  return sessionStorage.getItem(key);  
 }   
 } else {
-if(value.toUpperCase() !== ':REMOVE:' && key.uoUpperCase() !== ':REMOVE:') {
+if(value !== ':REMOVE:' && value !== ':remove:' && key !== ':REMOVE:' && key !== ':remove:') {
 sessionStorage.setItem(key, value);
 return true;       
  } else {    
-   sessionStorage.removeItem(key.toUpperCase() !== ':REMOVE:' ? key : value);        
+sessionStorage.removeItem(key !== ':REMOVE:' && key !== ':remove:' ? key : value);        
    return true;       
  }    
 } 
