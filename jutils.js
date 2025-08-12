@@ -85,7 +85,7 @@ class myJutils {
 }
 
 get target() { 
-return this.check ? this.element : this.check;          
+return this.element ? this.element : this.check;          
 }
  
     at(index = 0) {  
@@ -451,15 +451,37 @@ prev(selector) {
 };
 
 
-child(index = 0) {
-  if (this.element.children[index]) {
-    return new myJutils(this.element.children[index]);
+ // Method to get child elements
+  child(selector = 0, flag) {
+    if (typeof selector === 'number' && flag === undefined) {
+      // If selector is a number, use it as an index
+      return this.element.children[selector] ? new myJutils(this.element.children[selector]) : null;
+    } else {
+      // If selector is a string, use it as a CSS selector      
+    return flag ? new Jutils(this.element.querySelectorAll(selector)) : new myJutils(this.element.querySelector(selector));
+    }
+ }
+ 
+
+// Check if element has a character and return the length 
+countChars(char, length) {
+  const element = this.check;
+  const str = typeof element === 'string' ? element : element.toString();
+  
+  // Escape special regex characters
+  const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(escapedChar, 'g');
+  
+  if (length) {
+    return (str.match(regex) || []).length >= length;
   } else {
-    return null;
+    return (str.match(regex) || []).length;      
   }
 }
 
 
+
+// get element firstchild
 first(selector) {
   const child = this.element.firstElementChild;
   if (!child) return null;
@@ -467,7 +489,7 @@ first(selector) {
   return new myJutils(child);
 };
 
-
+// get element lastchild
 last(selector) {
   const child = this.element.lastElementChild;
   if (!child) return null;
@@ -659,7 +681,7 @@ settings.callback(this.element);
 
 
 // limit element characters method 
-charLimit(limit, callback = () => {}) {
+limitInputChars(limit, callback = () => {}) {
   let property;
   if (this.element.tagName !== 'INPUT' && this.element.tagName !== 'TEXTAREA') {
     property = 'textContent';
@@ -821,8 +843,8 @@ setTimeout(() => {
 }
 
 
-/* replace element not */
-charKeep(charsToKeep, replacement, global = false) {
+// Replace characters not in the specified set with a given replacement.
+filterChars(charsToKeep, replacement, global = false) {
   const regex = new RegExp(`[^${charsToKeep}]`, global ? 'g' : '');
   return this.check.toString().replace(regex, replacement);
 }
@@ -1020,8 +1042,9 @@ try {
 }
 
 
-// insert to a string with position
-putAt(char, position) {
+// Insert a character at a specified position in the string.
+// The position can be a numeric index or a substring to find its location.
+insertAt(char, position) {
   let index;
   if (typeof position === 'number') {
     index = position - 1;
@@ -1096,7 +1119,7 @@ let options = typeof type === 'object' && !option ? type : option;
   
 /* forEach utility function */
 each(callback) {
-Array.from(this.element).forEach((e, i, a) => {
+Array.from(this.element ? this.element : this.check).forEach((e, i, a) => {
 try {
 callback(e, i, a)   
 } catch {
@@ -1108,7 +1131,7 @@ callback(e, i, a)
 
 /* filter utility function */
 filter(callback) {
-  return Array.from(this.element).filter((e, i, a) => {
+  return Array.from(this.element ? this.element : this.check).filter((e, i, a) => {
     try {
       return callback(e, i, a);
     } catch (error) {      
@@ -1121,7 +1144,7 @@ filter(callback) {
 
 /* map utility function */
 map(callback) {
-  return Array.from(this.element).map((e, i, a) => {
+  return Array.from(this.element ? this.element : this.check).map((e, i, a) => {
     try {
       return callback(e, i, a);
     } catch (error) {
@@ -1134,7 +1157,7 @@ map(callback) {
 
 /* reduce utility function */
 reduce(callback, initialValue = 0) {
-  return Array.from(this.element).reduce((accumulator, currentValue, index, array) => {
+  return Array.from(this.element ? this.element : this.check).reduce((accumulator, currentValue, index, array) => {
     try {
       return callback(accumulator, currentValue, index, array);
     } catch (error) {
@@ -1147,7 +1170,7 @@ reduce(callback, initialValue = 0) {
 
 /* find utility function */
 find(callback) {
-  return Array.from(this.element).find((elem, index, array) => {
+  return Array.from(this.element ? this.element : this.check).find((elem, index, array) => {
     try {
       return callback(elem, index, array);
     } catch (error) {
@@ -1160,7 +1183,7 @@ find(callback) {
 
 /* some utility function */
 some(callback) {
-  return Array.from(this.element).some((elem, index, array) => {
+  return Array.from(this.element ? this.element : this.check).some((elem, index, array) => {
     try {
       return callback(elem, index, array);
     } catch (error) {
@@ -1171,23 +1194,32 @@ some(callback) {
 }
 
 
-charCount(type) {
-  const str = this.element;
-  switch(type) {
-    case 'upper': 
-      return (str.match(/[A-Z]/g) || []).length;
-    case 'lower':
-      return (str.match(/[a-z]/g) || []).length;
-    case 'number': 
-      return (str.match(/[0-9]/g) || []).length;
-    case 'alpha': 
-      return (str.match(/[a-zA-Z]/g) || []).length;
-    case 'special':
-  return (str.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?]/g) || []).length;
-    case 'emoji':
-      return (str.match(/\p{Extended_Pictographic}/gu) || []).length;                   
-  }  
+// Count the number of characters in the string based on the specified type.
+countCharType(type) {
+  const str = this.check;   
+const types = {
+    upper: (str.match(/[A-Z]/g) || []).length,
+    uppercase: (str.match(/[A-Z]/g) || []).length,
+    lower: (str.match(/[a-z]/g) || []).length,
+    lowercase: (str.match(/[a-z]/g) || []).length,
+    upper: (str.match(/[A-Z]/g) || []).length,
+    uppercase: (str.match(/[A-Z]/g) || []).length,
+    emoji: (str.match(/\p{Extended_Pictographic}/gu) || []).length,
+    special: (str.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?]/g) || []).length,
+    specialcharacter: (str.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?]/g) || []).length,
+    number: (str.match(/[0-9]/g) || []).length,
+    num: (str.match(/[0-9]/g) || []).length,
+    alpha: (str.match(/[a-zA-Z]/g) || []).length,
+    alphabet: (str.match(/[a-zA-Z]/g) || []).length
+}  
+
+const err = () => {
+throw new Error(`Invalid character type specified "${type}"`);                 
 }
+     
+return types[type] ? types[type] : err();
+}
+
 
 // Clipboard copy text  
  copy(callback) {
@@ -1244,53 +1276,71 @@ const text = this.check;
     });
   }
 }
+
   
-// sanitize string 
-sanitize(...filters) { 
+// Filter and return characters from the string based on specified criteria.
+cleanString(...filters) { 
   const filterFunctions = {
     emoji: (c) => /[\p{Extended_Pictographic}\u200d]/u.test(c),
     number: (c) => /[0-9]/.test(c),
+    num: (c) => /[0-9]/.test(c),
     lowercase: (c) => /[a-z]/.test(c),
+    lower: (c) => /[a-z]/.test(c),
     uppercase: (c) => /[A-Z]/.test(c),
+    upper: (c) => /[A-Z]/.test(c),
     alphabet: (c) => /[a-zA-Z]/.test(c),
-    special: (s) => s.replace(/[^!@#$%^&*()_+={}[\]|\:;"<>,.?/~`]/g, ''),
+    alpha: (c) => /[a-zA-Z]/.test(c),
+    special: (s) => s.replace(/[a-zA-Z0-9\p{Extended_Pictographic}\u200d\s]/gu, ''),
+    specialcharacter: (s) => s.replace(/[a-zA-Z0-9\p{Extended_Pictographic}\u200d\s]/gu, ''),
   };
 
-  let result = '';
+  let result = '';  
+try {        
   for (const char of this.check) {
     if (filters.some((filter) => filterFunctions[filter](char))) {
       result += char;
     }
   }
+} catch {
+ throw new TypeError(`${filters} is not a valid selector`);
+}
 
   return result;
 } 
 
 
-// filterOut string 
-filterOut(...filters) {
+// Remove specified character types from the string.
+removeString(...filters) {
   const filterFunctions = {
     emoji: (s) => s.replace(/[\p{Extended_Pictographic}\u200d]+/gu, ''),
     number: (s) => s.replace(/[0-9]/g, ''),
+    num: (s) => s.replace(/[0-9]/g, ''),
     lowercase: (s) => s.replace(/[a-z]/g, ''),
+    lower: (s) => s.replace(/[a-z]/g, ''),
     uppercase: (s) => s.replace(/[A-Z]/g, ''),
+    upper: (s) => s.replace(/[A-Z]/g, ''),
     alphabet: (s) => s.replace(/[a-zA-Z]/g, ''),    
+    alpha: (s) => s.replace(/[a-zA-Z]/g, ''),    
     special: (s) => s.replace(/[^a-zA-Z0-9\p{Extended_Pictographic}\u200d\s]/gu, ''),
+    specialcharacter: (s) => s.replace(/[^a-zA-Z0-9\p{Extended_Pictographic}\u200d\s]/gu, ''),
   };
 
   let result = this.check.toString();
+  try {
   filters.forEach((filter) => {
     if (!filterFunctions[filter]) {
       throw new Error(`Invalid filter: ${filter}`);
     }
     result = filterFunctions[filter](result);
   });
-
+} catch {
+    throw new TypeError(`${filters} is not a valid selector`);
+}
   return result;
 }
 
 
-/* Swipe from left to right  */
+// Swipe from left to right  
  swipeLeft(options = {}) {
   const defaults = {
     threshold: 50,
@@ -1300,7 +1350,14 @@ filterOut(...filters) {
     },
   };
 
-  const opts = { ...defaults, ...options };
+  let opts;
+
+   // Check if options is a function
+  if (typeof options === 'function') {
+    opts = { ...defaults, callback: options };
+  } else {
+    opts = { ...defaults, ...options };
+  }
 
   let startX = 0;
   let target = this.element;
@@ -1319,7 +1376,7 @@ filterOut(...filters) {
 }
 
 
-/* Swipe from bottom to top */
+// Swipe from bottom to top 
  swipeBottom(options = {}) {
   const defaults = {
     threshold: 50,
@@ -1329,7 +1386,14 @@ filterOut(...filters) {
     },
   };
 
-  const opts = { ...defaults, ...options };
+  let opts;
+
+   // Check if options is a function
+  if (typeof options === 'function') {
+    opts = { ...defaults, callback: options };
+  } else {
+    opts = { ...defaults, ...options };
+  }
 
   let startY = 0;
   let target = this.element;
@@ -1348,7 +1412,7 @@ filterOut(...filters) {
 }
 
 
-/* Swipe from top to down */
+// Swipe from top to down 
  swipeTop(options = {}) {
   const defaults = {
     threshold: 50,
@@ -1358,7 +1422,14 @@ filterOut(...filters) {
     },
   };
 
-  const opts = { ...defaults, ...options };
+  let opts;
+
+   // Check if options is a function
+  if (typeof options === 'function') {
+    opts = { ...defaults, callback: options };
+  } else {
+    opts = { ...defaults, ...options };
+  }
 
   let startY = 0;
   let target = this.element;
@@ -1377,7 +1448,7 @@ filterOut(...filters) {
 }
 
 
-/* Swipe from right to left  */
+// Swipe from right to left  
  swipeRight(options = {}) {
   const defaults = {
     threshold: 50,
@@ -1387,7 +1458,15 @@ filterOut(...filters) {
     },
   };
 
-  const opts = { ...defaults, ...options };
+let opts;
+
+   // Check if options is a function
+  if (typeof options === 'function') {
+    opts = { ...defaults, callback: options };
+  } else {
+    opts = { ...defaults, ...options };
+  }
+
 
   let startX = 0;
   let target = this.element;
@@ -1407,9 +1486,9 @@ filterOut(...filters) {
 
 
 /* array method to count array matching length */
- count(callback) {
-  let count = 0;
-for (let i = 0; i < this.element.length; i++) {
+ count(callback, flag) {
+  let count = flag || 0;
+for (let i = 0; i < (this.element ? this.element : this.check).length; i++) {
     if (callback(this.element[i])) {
       count++;
     }
@@ -1418,13 +1497,13 @@ for (let i = 0; i < this.element.length; i++) {
 }
 
 
-/* concat multiple array together */
+// concat multiple array together 
 merge(...args) {
-return this.element.concat(...args);   
+return this.check.concat(...args);   
 }
 
 
-/* set dataset on element */
+// set dataset on element 
 data(key, value) {
   if(key && value === undefined) {
   return this.element.dataset[key];   
@@ -1437,11 +1516,83 @@ return this.element.dataset;
 }
 
 
+// hash a string 
+hash(pin = '') {
+  let hash = '';
+  let offset = 0;
+  if (pin) {
+    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
+  for (let i = 0; i < this.check.length; i++) {
+    const charCode = this.check.charCodeAt(i);
+    const hashedChar = String.fromCharCode(charCode + (i % 10) * (pin ? pin.length : 1) + offset);
+    hash += hashedChar;
+  }
+  return hash;
+}
+
+// unhash a string
+unhash(pin = '') {
+  let unHash = '';
+  let offset = 0;
+  if (pin) {
+    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
+  for (let i = 0; i < this.check.length; i++) {
+    const charCode = this.check.charCodeAt(i);
+    const unHashedChar = String.fromCharCode(charCode - (i % 10) * (pin ? pin.length : 1) - offset);
+    unHash += unHashedChar;
+  }
+  return unHash;
+}
 
 
+// Ascend array with optional key function
+ascend(keyFunction) {
+  const array = this.element.slice(); // Create a copy of the array to avoid mutating the original
+
+  return array.sort((a, b) => {
+    // Determine the sort values based on provided keyFunction or default to the item itself
+    const aValue = keyFunction ? keyFunction(a) : a;
+    const bValue = keyFunction ? keyFunction(b) : b;
+
+    // Compare values, allowing for date objects or other types
+    if (aValue instanceof Date && bValue instanceof Date) {
+      return aValue - bValue; // Sort by date
+    }
+    return String(aValue).localeCompare(String(bValue)); // Sort lexicographically
+  });
+};
 
 
+// Descend array with optional key function
+descend(keyFunction) {
+  const array = this.element.slice(); // Create a copy of the array to avoid mutating the original
 
+  return array.sort((a, b) => {
+    // Determine the sort values based on provided keyFunction or default to the item itself
+    const aValue = keyFunction ? keyFunction(a) : a;
+    const bValue = keyFunction ? keyFunction(b) : b;
+
+    // Sort by descending order
+    if (aValue instanceof Date && bValue instanceof Date) {
+      return bValue - aValue; // Sort by date
+    }
+    return String(bValue).localeCompare(String(aValue)); // Sort lexicographically
+  });
+};
+  
+
+// reverse array
+ reverse() { 
+    return this.element.reverse();
+  }
+
+
+// generate random array 
+ randArr() {
+    return this.element[Math.floor(Math.random() * this.element.length)];
+  }
 }
 
 
@@ -1451,47 +1602,9 @@ function $(selector, all) {
 return new myJutils(selector, all);
 }
 
-
-
-// ascend array with optional key
- $.asc = function(arr, key) {
- const array = arr;
-    if (key) {
-      const isNumeric = typeof array[0][key] === 'number';
-      return array.sort((a, b) => isNumeric ? a[key] - b[key] : a[key].localeCompare(b[key]));
-    } else {
-      const isNumeric = typeof array[0] === 'number';
-      return array.sort((a, b) => isNumeric ? a - b : a.localeCompare(b));
-    }
-  }
-
-
-// descend array with optional key
- $.desc = function(arr, key) {
- const array = arr;
-    if (key) {
-      const isNumeric = typeof array[0][key] === 'number';
-      return array.sort((a, b) => isNumeric ? b[key] - a[key] : b[key].localeCompare(a[key]));
-    } else {
-      const isNumeric = typeof array[0] === 'number';
-      return array.sort((a, b) => isNumeric ? b - a : b.localeCompare(a));
-    }
-  }
-
-// reverse array
- $.reverse = function() { 
-    return this.check.reverse();
-  }
-
-// generate random array 
- $.randArr = function(arr) {
-const array = arr; 
-    return array[Math.floor(Math.random() * array.length)];
-  }
  
 // to fixed
 $.fixed = function(value, length = 2) {
-
 return Number(value).toFixed(length);  
 }
 
@@ -1745,9 +1858,9 @@ return Math.floor(Math.random() * (max - min + 1)) + min;
 // generate random alphabet 
 $.randAlpha = function(length, options = {}) {
   let alphabets = '';
-  if (options.uppercase) alphabets += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  if (options.lowercase) alphabets += 'abcdefghijklmnopqrstuvwxyz';
-  if (!options.uppercase && !options.lowercase) alphabets = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (options.uppercase || options.upper) alphabets += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (options.lowercase || options.lower) alphabets += 'abcdefghijklmnopqrstuvwxyz';
+  if (!options.uppercase && !options.lowercase && !options.lower && !options.upper) alphabets = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   let randomString = '';
   for (let i = 0; i < length; i++) {
@@ -1765,7 +1878,7 @@ $.validateEmail = function(email) {
 
 
 /* Sanitizes a string to prevent XSS and SQL injection attacks. */
-$.sanitize = function(input, callback) {
+$.sqlSanitize = function(input, callback) {
   if (typeof input !== 'string') {
     throw new Error('Input must be a string');
   }
@@ -1842,7 +1955,7 @@ throw new Error('Invalid flag');
    return true;      
    } else {
    return window.location[flag];
-   }    
+   }       
 }
 
 
@@ -1887,11 +2000,9 @@ $.formData = function(...args) {
 if(key === undefined) {
 return localStorage;  
 } else if(value === undefined) {
-if(key.toUpperCase() === ':CLEAR:') {
+if(key === ':CLEAR:' || key === ':clear:') {
 localStorage.clear();
-    return true;     
-} else if(Number(key) && !isNaN(key)) {
-return localStorage.key(key);          
+    return true;             
 } else {
  return localStorage.getItem(key);  
 }   
@@ -1912,11 +2023,9 @@ return true;
 if(key === undefined) {
 return sessionStorage;  
 } else if(value === undefined) {
-if(key.toUpperCase() === ':CLEAR:') {
+if(key === ':CLEAR:' || key === ':clear:') {
 sessionStorage.clear();
-    return true;     
-} else if(Number(key) && !isNaN(key)) {
-return sessionStorage.key(key);          
+    return true;       
 } else {
  return sessionStorage.getItem(key);  
 }   
@@ -1977,7 +2086,7 @@ sessionStorage.removeItem(key !== ':REMOVE:' && key !== ':remove:' ? key : value
   } else {
     // Set Content-Type using contentType and headerValue
     if (myData instanceof FormData) {
-      delete fetchOptions.headers['Content-Type']; // Let the browser set it
+      delete fetchOptions.headers['Content-Type']; // Let the browser set it      
     } else {
       fetchOptions.headers[options.contentType || 'Content-Type'] = options.headerValue || 'application/octet-stream';
     }
@@ -2096,35 +2205,7 @@ $.when = function(...promises) {
   deferred.finally = promise.finally.bind(promise);
 
   return deferred;
-}
-
-
-// manipulate date object SET or GET
-$.date = function(...args) {
-  const request = new Date();
-  
-  if (Array.isArray(args[0])) {
-    // Getter
-    return args[0].map(flag => {
-      const prop = request[flag];
-      return typeof prop === 'function' ? prop.call(request) : prop;
-    });
-  } else {
-    // Setter
-    for (let i = 0; i < args.length; i += 2) {
-      const flag = args[i];
-      const value = args[i + 1];
-      const prop = request[flag];
-      if (typeof prop === 'function') {
-        prop.call(request, value);
-      } else {
-        throw new Error(`Cannot set flag: ${flag}`);
-      }
-    }
-    return request;
-  }
-}
-
+}  
 
 /* Calculates a future or past date by adding the specified milliseconds to the current date. */
 $.shiftDate = function(ms, back) {
@@ -2152,7 +2233,7 @@ $.shiftDate = function(ms, back) {
     d: 86400000, // 1 day in ms
     day: 86400000, // 1 day in ms
     h: 3600000, // 1 hour in ms
-    hour: 3600000, // 1 hour in ms
+    hour: 3600000, // 1 hour in ms   
     m: 60000, // 1 minute in ms
     min: 60000, // 1 minute in ms
     minute: 60000, // 1 minute in ms
@@ -2180,37 +2261,92 @@ $.shiftDate = function(ms, back) {
 
 
 /* Retrieve or store data in local storage under the given key */  
-$.dataStore = function(key, data) {
-  if (key !== undefined && data !== undefined) {
-    if (typeof data === 'object' || Array.isArray(data)) {
-      let history = $.parse($.storage(key)) || [];
-      if (!Array.isArray(history)) {
+$.dataStore = function(key, ...data) {
+   if (key !== undefined && data !== undefined) {
+    if (typeof data === 'object' || Array.isArray(data)) { 
+  const history = JSON.parse(localStorage.getItem(key)) || [];    
+ if (!Array.isArray(history)) {
         history = [history];
       }
-      history.push(data);
-      $.storage(key, $.json(history));
+   history.push(...data);   
+ localStorage.setItem(key, JSON.stringify(history));        
     } else {
-      throw new Error(`Invalid typeof data "${typeof data}" $.dataStore expect either "object" or "array"`);
+  throw new Error(`Invalid typeof data "${typeof data}" $.dataStore expect either "object" or "array"`);    
     }
+    }
+let history = JSON.parse(localStorage.getItem(key)) || [];
+
+if (!Array.isArray(history)) {
+        history = [history];
+    }
+
+// Retrieves the value of a specific key from the last item that has it
+let lastItemWithNam;
+history.get = (keyName) => {
+history.forEach((item, index) => {
+  if (item[keyName]) {
+    lastItemWithNam = item[keyName];    
   }
-
-  let history = $.parse($.storage(key)) || [];
-  if (!Array.isArray(history)) {
-    history = [history];
-  }
-
-  let latestItem = history[history.length - 1] || {};
-
-  return $.extend(history, latestItem)
+}); 
+return lastItemWithNam || null;  
 }
 
+// Counts the number of items that have a specific key 
+let count = 0;
+history.count = (keyName) => {
+if(keyName) {
+history.forEach((item, index) => {
+ if (item[keyName]) {
+    count++;
+    }
+}); 
+} else {
+history.forEach((item, index) => {
+count++
+});
+}
+return count;  
+}
+
+// Removes the stored data entirely
+history.empty = () => {
+    localStorage.removeItem(key);  
+    history = [];
+}
+
+// Deletes a specific key from either all items or the last item that has it
+let toDeleteIndex;    
+history.delete = (keyName, all = false) => {
+if(all) {
+history.forEach((item, index) => {
+if(item[keyName]) {
+delete history[index][keyName];
+}
+});
+} else {
+history.forEach((item, index) => {
+if(item[keyName]) {
+toDeleteIndex = index;  
+}  
+});
+delete history[toDeleteIndex][keyName];
+}
+localStorage.setItem(key, JSON.stringify(history));   
+}
+
+// Adds new data to the history array
+history.set = (...data) => {
+history.push(...data);
+   localStorage.setItem(key, JSON.stringify(history));   
+}
+
+return history;    
+}
 
 /* Object assign function logic */
 $.extend = function(target, ...args) {
   return Object.assign(target, ...args); 
 }
-
-
 
 /* Autotyping text automatically */
 myJutils.prototype.autoType = function(html, options = {}) {
@@ -2276,9 +2412,8 @@ myJutils.prototype.autoType = function(html, options = {}) {
 };
 
 
- /* Checks if a network request to the specified URL is successful.
- */
-$.networkCheck = function(url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', dataType = 'json') {                                                     
+ /* Checks if a network request to the specified URL is successful. */
+$.conn = function(url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', dataType = 'json') {                                                     
   return new Promise((resolve) => {
     if (window.fetch) {
       fetch(url)
@@ -2291,9 +2426,9 @@ $.networkCheck = function(url = 'https://api.coingecko.com/api/v3/simple/price?i
          })
         .then((data) => {          
        resolve(true);                          
-        })
-        .catch(() => {
-          resolve(false);
+        })       
+        .catch(() => {        
+          resolve(false);           
         });
     } else {
  const xhr = new XMLHttpRequest();
@@ -2319,33 +2454,5 @@ $.networkCheck = function(url = 'https://api.coingecko.com/api/v3/simple/price?i
 };
 
 
-// hash a string 
-$.hash = function(check, pin = '') {
-  let hash = '';
-  let offset = 0;
-  if (pin) {
-    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  }
-  for (let i = 0; i < check.length; i++) {
-    const charCode = check.charCodeAt(i);
-    const hashedChar = String.fromCharCode(charCode + (i % 10) * (pin ? pin.length : 1) + offset);
-    hash += hashedChar;
-  }
-  return hash;
-}
 
-// unhash a string
-$.unhash = function(check, pin = '') {
-  let unHash = '';
-  let offset = 0;
-  if (pin) {
-    offset = pin.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  }
-  for (let i = 0; i < check.length; i++) {
-    const charCode = check.charCodeAt(i);
-    const unHashedChar = String.fromCharCode(charCode - (i % 10) * (pin ? pin.length : 1) - offset);
-    unHash += unHashedChar;
-  }
-  return unHash;
-}
-  
+
