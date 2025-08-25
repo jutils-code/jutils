@@ -1,4 +1,4 @@
-# jutils
+# jUtils
 A JavaScript library 
 # jutils.js
 
