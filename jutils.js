@@ -2698,3 +2698,8 @@ $.date = function(date = new Date()) {
     },      
     }         
 }
+
+
+function sample() {
+    
+}
