@@ -2602,3 +2602,99 @@ $.location = function(flag, url) {
 }
 
 
+$.date = function(date = new Date()) {
+  return {   
+    custom(value) {
+      if (value !== undefined) {
+        date = new Date(value);
+        return $.date(date);
+      } else {
+        return date;
+      }
+    },
+    year(value) {
+      if (value !== undefined) {
+        date.setFullYear(value);
+        return $.date(date);
+      } else {
+        return date.getFullYear();
+      }
+    },
+    month(value) {
+      if (value !== undefined) {
+        date.setMonth(value);
+        return $.date(date);
+      } else {
+        return date.getMonth();
+      }
+    },
+    date(value) {
+      if (value !== undefined) {
+        date.setDate(value);
+        return $.date(date);
+      } else {
+        return date.getDate();
+      }
+    },
+    day(value) {
+      if (value !== undefined) {
+        date.setDate(date.getDate() + (value - date.getDay()) + 1);
+        return $.date(date);
+      } else {
+        return date.getDay();
+      }
+    },
+    hours(value) {
+      if (value !== undefined) {
+        date.setHours(value);
+        return $.date(date);
+      } else {
+        return date.getHours();
+      }
+    },
+    minutes(value) {
+      if (value !== undefined) {
+        date.setMinutes(value);
+        return $.date(date);
+      } else {
+        return date.getMinutes();
+      }
+    },
+    seconds(value) {
+      if (value !== undefined) {
+        date.setSeconds(value);
+        return $.date(date);
+      } else {
+        return date.getSeconds();
+      }
+    },
+    milliseconds(value) {
+      if (value !== undefined) {
+        date.setMilliseconds(value);
+        return $.date(date);
+      } else {
+        return date.getMilliseconds();
+      }
+    },
+    time(value) {
+      if (value !== undefined) {
+        date.setTime(value);
+        return $.date(date);
+      } else {
+        return date.getTime();
+      }
+    },
+    locale() {
+      return date.toLocaleString();
+    },
+    localeTime() {
+      return date.toLocaleTimeString();
+    },
+    localeDate() {
+      return date.toLocaleDateString();
+    },
+    result() {
+      return date;
+    },      
+    }         
+}
