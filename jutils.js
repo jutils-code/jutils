@@ -1666,24 +1666,55 @@ insertCharAt(char, position) {
 
 
 // change input type "password" to text or vice versa(password)  / or set 
-setInputType(type) {
+inputType(type) {
 return this.catchGet((item) => {
   if (type === undefined) {
     return item.type;
-  }
-
-  if (['password', 'text'].includes(type)) {
-    item.type = type;        
-  } else {    
-    item.type = item.type === 'password' ? 'text' : 'password';    
-  }
+  } else if(type === true) {
+item.type = item.type === 'password' ? 'text' : 'password';          
+  } else {
+item.type = type;          
+  } 
   }, 'map');
 }
 
 
+  addLoadEffect(duration = 5000, callback = () => {}) {
+  this.catchSet((item) => {
+    item.classList.add('loading89');
+    setTimeout(() => {
+      item.classList.remove('loading89');
+      callback(item);
+    }, duration);
+  });
 
-
-
+  const style = document.createElement('style');
+  style.textContent = `
+    .loading89 {
+      color: transparent;
+      text-shadow: 0 0 15px rgba(0, 0, 0, 1);
+      animation: loading89 1.5s infinite;             
+    }
+    @keyframes loading89 {
+      0% {
+        text-shadow: 0 0 15px rgba(0, 0, 0, 1);
+      }
+      50% {
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+      }
+      100% {
+        text-shadow: 0 0 15px rgba(0, 0, 0, 1);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  return new Promise((resolve) => {
+  setTimeout(() => {      
+      resolve(this.element);
+    }, duration);  
+  });
+}
 
 
 
@@ -2668,7 +2699,7 @@ $.date = function(date = new Date()) {
         return date.getSeconds();
       }
     },
-    milliseconds(value) {
+    ms(value) {
       if (value !== undefined) {
         date.setMilliseconds(value);
         return $.date(date);
@@ -2700,6 +2731,96 @@ $.date = function(date = new Date()) {
 }
 
 
-function sample() {
-    
+/**
+ * Sends an email using EmailJS.
+ *
+ * @param {Object} options - Options for the email.
+ * @param {string} options.publicKey - Public key for EmailJS.
+ * @param {string} options.serviceId - Service ID for EmailJS.
+ * @param {string} options.templateId - Template ID for EmailJS.
+ * @param {number} [options.version=4] - Version of EmailJS to use.
+ * @param {string} [options.url='https://cdn.jsdelivr.net/npm/@emailjs/browser@'] - URL of the EmailJS CDN.
+ * @param {Function} [options.success] - Callback function for success.
+ * @param {Function} [options.error] - Callback function for error.
+ * @param {HTMLElement} options.template - Template element to send.
+ */
+$.emailJs = function(options) {
+  const defaults = {
+    publicKey: 'YOUR_PUBLIC_KEY',
+    serviceId: 'YOUR_SERVICE_ID',
+    templateId: 'YOUR_TEMPLATE_ID',
+    version: 4,
+    url: null,
+    success: () => {},
+    error: () => {},
+    template: null,
+  };
+
+  const settings = Object.assign({}, defaults, options);
+
+  const script = document.createElement('script');
+if(settings.url) {
+script.src = settings.url;    
+} else {
+script.src = `https://cdn.jsdelivr.net/npm/@emailjs/browser@${settings.version}/dist/email.min.js`;    
+}      
+
+  script.onload = () => {
+    emailjs.init(settings.publicKey);
+    emailjs.sendForm(settings.serviceId, settings.templateId, settings.content)
+      .then((data) => {
+     settings.success(data);
+      }, (err) => {
+     settings.error(err);
+      });
+  };
+
+  document.head.appendChild(script);
+};
+
+
+
+
+// send email programmically to user
+$.brevo = function(options = {}) {
+const requiredProperties = ['apiKey', 'senderEmail', 'recipientEmail', 'subject', 'content'];
+  requiredProperties.forEach((property) => {
+    if (!options[property]) {
+      throw new Error(`Missing required property: ${property}`);
+    }
+  });
+
+const url = options.url || `https://api.brevo.com/v${options.version || 3}/smtp/email`; 
+const data = {
+sender: {
+name: options.senderName,
+email: options.senderEmail
+ },
+ to: [
+ {
+     email: options.recipientEmail,
+     name: options.recipientName
+   }
+ ],
+ 
+ subject: options.subject,
+ htmlContent: options.content 
+}
+
+fetch(url, {
+method: 'POST',
+headers: {
+accept: 'application/json',
+'api-key': options.apiKey,
+'content-type': 'application/json'
+},
+body: JSON.stringify(data)  
+})  
+.then(response => response.json())   
+.then(data => {
+    options.success(data);
+})   
+.catch(err => {
+    options.error(err);
+})    
 }
