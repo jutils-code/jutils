@@ -603,14 +603,23 @@ setTimeout(() => {
    }
    
       
- progress(ms, options) {
-let time = 10000;
+progress(ms, options = () => {}) {
+let time = typeof ms === 'object' ? ms.duration ?? 5000 : ms ?? 5000;
+
 this.catchSet((item) => {
+window.addEventListener('load', () => {
 if(typeof ms === 'object' && !Array.isArray(ms)) {
-time = ms.duration !== undefined ? ms.duration : 0;  
+Object.assign(item.style, ms);
+progressBar.style.background = ms.progressColor;
+setTimeout(() => {
+ ms.callback ? ms.callback(item) : null; 
+}, time); 
 } else {
-time = ms || 10000;    
-} 
+setTimeout(() => {
+  options(item); 
+}, time);     
+}  
+});
 
     item.innerHTML = '';
     item.style.width = '100%';
@@ -625,23 +634,8 @@ time = ms || 10000;
     item.appendChild(progressBar);
    setTimeout(() => {
       progressBar.style.width = '100%';
-    }, 1);
-    
-
-if(typeof ms === 'object' && !Array.isArray(ms)) {
-Object.assign(item.style, ms);
-progressBar.style.background = ms.progressColor;
-progressBar.id = ms.id;
-progressBar.classList.add(ms.class);
-setTimeout(() => {
- ms.callback ? ms.callback(item) : null; 
-}, time); 
-} else if(typeof ms === 'number' && typeof options === 'function') {
-setTimeout(() => {
-  options(item); 
-}, time);     
-} 
-  });
+    }, 1);        
+ });
 
 return new Promise((resolve) => {
   setTimeout(() => {
@@ -649,6 +643,7 @@ return new Promise((resolve) => {
   }, time); 
 });  
  }
+  
 
       
    swipeLeft(options = {}) {
@@ -1059,39 +1054,7 @@ const text = this.element;
  document.body.removeChild(textarea);
     }
    }
-   
-   
-   toFixed(fixed = 2) {
-return this.catchGet((item) => item.toFixed(fixed));       
-   }
-   
-   
-   lower() {
-return this.catchGet((item) => item.toLowerCase(), 'map').join('');       
-   }
-   
-   upper() {
-return this.catchGet((item) => item.toUpperCase(), 'map').join('');  
-   }
-   
-   toStr() {   
-return this.element.toString();           
-   }
-   
-   int() {   
-return parseInt(this.element);             
-   }
-   
-   float() {
-return parseFloat(this.element);        
-   }
-
-// Toggle the case of the string (uppercase becomes lowercase, and vice versa)
-  swapCase() {
-  return this.catchGet((item) => {
-    return item === item.toUpperCase() ? item.toLowerCase() : item.toUpperCase();
-  }, 'map').join('');
-}
+         
 
 // Make none VALUE or TEXTAREA element editable 
 edit(options) {
@@ -1392,83 +1355,51 @@ asterisk(changeTo = "*", auto) {
 }
 
 
+loader(loadSpeed, stopLoader, callback = () => {}) {
+  const speedDuration = typeof loadSpeed === 'object' ? loadSpeed.speed ?? 1000 : loadSpeed ?? 1000;
+  const stopDuration = typeof loadSpeed === 'object' ? loadSpeed.duration ?? 5000 : stopLoader ?? 5000;
 
-
-loader(loadSpeed, stopLoader, callback) {
-let speedDuration;
-let stopDuration;
-
-this.catchSet((item) => {
-item.innerHTML = '';
-if(arguments.length === 3) {
-speedDuration = loadSpeed;
-stopDuration = stopLoader;
-setTimeout(() => {
-item.style.animation = 'none';
-callback(item);   
-}, stopDuration);   
-} else if(arguments.length === 2) {
-speedDuration = loadSpeed;
-if(typeof stopLoader === 'function') {
-setTimeout(() => {
-stopLoader(item);   
-}, stopDuration);       
-} else {
-stopDuration = stopLoader;  
-setTimeout(() => {
-item.style.animation = 'none';
-}, stopDuration);  
-}    
-} else if(arguments.length === 1) {
-if(typeof loadSpeed === 'number') {
-speedDuration = loadSpeed; 
-} else if(typeof loadSpeed === 'function') {
-speedDuration = 1000;    
-loadSpeed();
-} else if(typeof loadSpeed === 'object') {
-speedDuration = loadSpeed.speed;
-stopDuration = loadSpeed.duration;
-setTimeout(() => {
-item.style.animation = 'none';
-loadSpeed.callback ? loadSpeed.callback(item) : null;   
-}, stopDuration);
-} 
-} else {
-speedDuration = 1000;   
-}
-  
-  item.style.width = '40px';
-  item.style.height = '40px';  
-  item.style.border = '5px solid #f3f3f3';     
-  item.style.borderTop = '5px solid #3498db';  
-  item.style.borderRadius = '70%';
-  item.style.animation = `spin ${speedDuration / 1000}s linear infinite`;  
-  
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
+  this.catchSet((item) => {
+    window.addEventListener('load', () => {
+      if (typeof loadSpeed === 'object') {
+        Object.assign(item.style, loadSpeed);
+        setTimeout(() => {
+          item.style.animation = 'none';
+          loadSpeed.callback ? loadSpeed.callback(item) : null;
+        }, stopDuration);
+      } else {
+        setTimeout(() => {
+          item.style.animation = 'none';
+          callback(item);
+        }, stopDuration);
       }
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-  `;
-  document.head.appendChild(style);
-  
-if(arguments.length === 1 && typeof loadSpeed === 'object') {
-Object.assign(item.style, loadSpeed);  
-item.id = loadSpeed.id;
-item.classList.add(loadSpeed.class);
-}      
-});
+    });
 
-return new Promise((resolve) => {
-  setTimeout(() => {
-    resolve(this.element);
-  }, stopDuration); 
-});   
+    item.innerHTML = '';
+    item.style.cssText = `
+      width: 40px;
+      height: 40px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 70%;
+      animation: spin ${speedDuration / 1000}s linear infinite;
+    `;
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  });
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(this.element);
+    }, stopDuration);
+  });
 }
 
 
@@ -1679,7 +1610,7 @@ item.type = type;
 }
 
 
-  addLoadEffect(duration = 5000, callback = () => {}) {
+ addLoadEffect(duration = 5000, callback = () => {}) {
   this.catchSet((item) => {
     item.classList.add('loading89');
     setTimeout(() => {
@@ -1753,7 +1684,46 @@ $.descend = function(array, keyFunction = x => x) {
 $.randArr = function(array) {
     return array[Math.floor(Math.random() * array.length)];
   }
-  
+
+
+// to fixed
+$.fixed = function(value, length = 2) {
+return Number(value).toFixed(length);  
+}
+
+// to string 
+$.str = function(element) {
+return element.toString(); 
+}
+
+
+// to uppercase 
+$.upper = function(element) {
+return element.toUpperCase(); 
+}
+
+
+// to lowercase 
+$.lower = function(element) {
+return element.toLowerCase();  
+}
+
+
+// parseInt 
+$.int = function(element) {
+return parseInt(element); 
+}
+
+
+// parseFloat 
+$.float = function(element) {
+return parseFloat(element);
+}
+
+// Toggle the case of the string (uppercase becomes lowercase, and vice versa)
+$.swapCase = function(value) {
+return value === value.toUpperCase() ? value.toLowerCase() : value.toUpperCase();    
+}  
   
   
 // JSON.stringify function 
