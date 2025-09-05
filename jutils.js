@@ -16,7 +16,7 @@ return new jUtils(containerElement);
 if (typeof element === 'string') {
   try {
     const elements = document.querySelectorAll(element);
-    this.element = elements.length > 0 ? elements : element;
+    this.element = elements.length > 0 ? elements : element;        
   } catch (err) {
     this.element = element;
   }
@@ -291,7 +291,7 @@ return this.catchGet((item) => item.classList.contains(styles), 'some');
    
    click(callback) {
 this.catchSet((item) => {
-item.addEventListener('click', callback); 
+item.addEventListener('click', callback);
 });   
 return callback;         
    }     
@@ -1117,70 +1117,68 @@ if (!style) {
 
 
 // Autotyping logic 
-autoType(html, options = {}) {
-this.catchSet((item) => {
-  const defaults = {
-    typeSpeed: 5000,
-    loop: 1,
-    stopAt: null,
-    parser: 'html',
-    doneText: null
-  };
+autoType(content, options = {}) {
+  this.catchSet((item) => {
+    const defaults = {
+      typeSpeed: 5000,
+      loop: 1,
+      stopAt: null,
+      parser: 'html',
+      doneText: null
+    };
+    const settings = { ...defaults, ...options };
 
-  const settings = { ...defaults, ...options };
+    let currentIndex = 0;
+    let currentContentIndex = 0;
+    let isDeleting = false;
+    let loopCount = 0;
 
-  let currentIndex = 0;
-  let isDeleting = false;
-  let loopCount = 0;
-  let textContent = settings.parser === 'text' ? getTextContent(html) : html;
+    let contents = Array.isArray(content) ? content : [content];
 
-  function type() {
-    if (isDeleting) {
-      item.innerHTML = textContent.substring(0, currentIndex) + getCaret();
-      currentIndex--;
-      if (currentIndex < 0) {
-        isDeleting = false;
-        loopCount++;
-        if (loopCount >= settings.loop) {
-          clearInterval(intervalId);
-          const displayText = settings.doneText || (settings.parser === 'html' ? html : textContent);
-         item.innerHTML = displayText;
+    function getTextContent(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
+    }
+
+    function getCaret() {
+      return '<span style="border-right: 1px solid black; margin-left: 1px;"></span>';
+    }
+
+    function type() {
+      let textContent = settings.parser === 'text' ? getTextContent(contents[currentContentIndex]) : contents[currentContentIndex];
+
+      if (isDeleting) {
+        item.innerHTML = textContent.substring(0, currentIndex) + getCaret();
+        currentIndex--;
+        if (currentIndex < 0) {
+          isDeleting = false;
+          currentContentIndex = (currentContentIndex + 1) % contents.length;
+          if (settings.loop !== true && currentContentIndex === 0) {
+            loopCount++;
+            if (loopCount >= settings.loop) {
+              clearInterval(intervalId);
+              const displayText = settings.doneText || (settings.parser === 'html' ? contents[contents.length - 1] : getTextContent(contents[contents.length - 1]));
+              item.innerHTML = displayText;
+            }
+          }
         }
-      }
-    } else {
-     item.innerHTML = textContent.substring(0, currentIndex + 1) + getCaret();
-      currentIndex++;
-
-      if (settings.stopAt && textContent.substring(0, currentIndex).includes(settings.stopAt)) {
-        isDeleting = true;
-      }
-
-      if (currentIndex >= textContent.length) {
-        if (settings.loop > 1) {
+      } else {
+        item.innerHTML = textContent.substring(0, currentIndex + 1) + getCaret();
+        currentIndex++;
+        if (settings.stopAt && textContent.substring(0, currentIndex).includes(settings.stopAt)) {
           isDeleting = true;
-        } else {
-          clearInterval(intervalId);
-          const displayText = settings.doneText || (settings.parser === 'html' ? html : textContent);
-         item.innerHTML = displayText;
+        }
+        if (currentIndex >= textContent.length) {
+          isDeleting = true;
         }
       }
     }
-  }
 
-  function getTextContent(html) {
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    return div.textContent || div.innerText || '';
-  }
-
-  function getCaret() {
-    return '<span style="border-right: 1px solid black; margin-left: 1px;"></span>';
-  }
-
-  const intervalId = setInterval(type.bind(this), settings.typeSpeed / 10);
-  
+    const intervalId = setInterval(type.bind(this), settings.typeSpeed / 10);
   });
-};
+}
+
 
 // Create a horizontal divider with text in the middle.
  divider(options) {
