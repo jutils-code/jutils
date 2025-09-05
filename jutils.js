@@ -2542,7 +2542,6 @@ $.formData = function(...args) {
       }
     }
   }
-
   return formData;
 };
 
@@ -2558,31 +2557,23 @@ $.params = function(options) {
 
 
 
-$.pushState = function(flag, url, options = {}) {
-  if (typeof flag !== 'string' || !flag || typeof url !== 'string' || !url) {
-    throw new Error('Invalid flag or url. Both must be non-empty strings.');
-  }
-  const currentUrl = new URL(window.location.href);
-  switch (flag) {
-    case 'pathname':
-      currentUrl.pathname = url;
-      break;
-    case 'search':
-      currentUrl.search = '?' + url;
-      break;
-    case 'hash':
-      currentUrl.hash = '#' + url;
-      break;
-    default:
-      throw new Error(`Unsupported flag: ${flag}`);
-  }
-  window.history.pushState(options, '', currentUrl.href);
-  return true;
+$.pushstate = function(flag, title, options) {
+if(options === undefined) {
+if(typeof title === 'object') {
+window.history.pushState(title, '', flag);
+} else {
+window.history.pushState({}, '', flag); 
+document.title = title || document.title;       
 }
-
+} else {
+window.history.pushState(options, '', flag);
+document.title = title || document.title;       
+}
+ }
+ 
 
 // manipulate window location 
-$.location = function(flag, url) {
+$.url = function(flag, url) {
   if (typeof flag !== 'string' || !['href', 'pathname', 'search', 'hash', 'origin'].includes(flag)) {
     throw new Error(`Unsupported flag: ${flag}. Must be one of 'href', 'pathname', 'search', 'hash', or 'origin'.`);
   }
@@ -2607,10 +2598,10 @@ $.date = function(date = new Date()) {
   return {   
     custom(value) {
       if (value !== undefined) {
-        date = new Date(value);
+        date = new Date(value.toString());
         return $.date(date);
       } else {
-        return date;
+        throw new Error('custom() required a valid date parameter');
       }
     },
     year(value) {
