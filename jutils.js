@@ -1327,7 +1327,8 @@ detach() {
 
 // Replaces the text content of an element with asterisks (*) for masking purpose.
 asterisk(changeTo = "*", auto) {
-  let tag = this.catchGet((item) => ['INPUT', 'TEXTAREA'].includes(item.tagName) ? 'value' : 'textContent');
+  let tag = this.catchGet((item) =>
+  ['INPUT', 'TEXTAREA'].includes(item.tagName) ? 'value' : 'textContent');
   const data = this.catchGet((item) => item[tag], 'map');
 
   if (changeTo && !auto) {
@@ -1653,6 +1654,124 @@ options.callback ? options.callback(item) : callback(item);
     }, duration);
   });
 }        
+
+
+
+
+toggleSwitch(options = () => {}) {
+    this.catchSet((item) => {
+        const toggleHtml = `
+            <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        `;
+
+        item.innerHTML = toggleHtml;
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+            
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            
+            .toggle-switch .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: 0.4s;
+            }
+            
+            .toggle-switch .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: 0.4s;
+            }            
+                      
+            .toggle-switch input:checked + .slider {
+                background-color: #2196F3;
+            }
+            
+            .toggle-switch input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+            
+            .toggle-switch .slider.round {
+                border-radius: 34px;
+            }
+            
+            .toggle-switch .slider.round:before {
+     border-radius: ${options.slider?.borderRadius ?? '50%'};                         
+            }
+        `;
+
+        // Apply additional styles if options is an object
+        if (typeof options === 'object') {
+            if (options.style) {
+ Object.entries(options.style).forEach(([key, value]) => {
+                    style.innerHTML += `
+                        .toggle-switch .slider {
+                            ${key}: ${value};
+                        }
+                    `;
+                });
+            } 
+            if(options.checked) {
+
+Object.entries(options.checked).forEach(([key, value]) => {
+                    style.innerHTML += `
+                        .toggle-switch input:checked + .slider {
+                            ${key}: ${value};
+                        }
+                    `;
+                });                
+            }
+             if(options.slider) {
+Object.entries(options.slider).forEach(([key, value]) => {
+                    style.innerHTML += `
+                       .toggle-switch .slider:before {
+                            ${key}: ${value};
+                        }                       
+                    `;
+                });                                     
+            }                        
+        }
+
+        document.head.appendChild(style);
+    });
+
+    const isChecked = this.catchGet((item) => item.querySelector('input'), 'map');
+
+    $(isChecked).on('change', (e) => {
+        if(options.callback) {
+   options.callback(e.target);         
+        } else if(typeof options === 'function'){
+ options(e.target);         
+        } else {        
+           return null;
+        }
+    });
+
+    return isChecked;         
+}
 
 
 
