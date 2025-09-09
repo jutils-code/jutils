@@ -1774,6 +1774,14 @@ Object.entries(options.slider).forEach(([key, value]) => {
 }
 
 
+// Rotate element on specified percentage 
+rotate(percentage) {
+this.catchSet((item) => {
+const rotateValue = (percentage / 100) * 360; 
+  item.style.transform = `rotate(${rotateValue}deg)`;
+  item.style.display = 'inline-block';
+  });    
+}
 
 
 }
